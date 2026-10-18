@@ -1,4 +1,267 @@
 syntax = "proto3";
 
 package file;
+
 option go_package = "./file";
+
+// ---------- base ----------
+message Empty {}
+
+message BaseResp {
+  string msg = 1;
+}
+
+message BaseIDResp {
+  uint64 id = 1;
+  string msg = 2;
+}
+
+message BaseUUIDResp {
+  string id = 1;
+  string msg = 2;
+}
+
+message IDReq {
+  uint64 id = 1;
+}
+
+message IDsReq {
+  repeated uint64 ids = 1;
+}
+
+message UUIDReq {
+  string id = 1;
+}
+
+message UUIDsReq {
+  repeated string ids = 1;
+}
+
+message PageInfoReq {
+  uint64 page = 1;
+  uint64 page_size = 2;
+}
+
+// ---------- file ----------
+message FileInfo {
+  optional string id = 1;
+  optional int64 created_at = 2;
+  optional int64 updated_at = 3;
+  optional uint32 status = 4; // 1 public, 2 private
+  optional string name = 5;
+  optional uint32 file_type = 6; // 1 other, 2 image, 3 video, 4 audio
+  optional uint64 size = 7;
+  optional string path = 8;
+  optional string user_id = 9;
+  optional string public_path = 10; // ServerURL + path, only for public files
+  repeated uint64 tag_ids = 11;
+}
+
+message FileListReq {
+  uint64 page = 1;
+  uint64 page_size = 2;
+  optional uint32 file_type = 3;
+  optional string file_name = 4;
+  repeated uint64 tag_ids = 5;
+  optional uint32 status = 6;
+  optional int64 start_at = 7; // created_at >= start_at (unix milli)
+  optional int64 end_at = 8;   // created_at <= end_at (unix milli)
+  optional string user_id = 9; // requester id, injected by the gateway from JWT
+}
+
+message FileListResp {
+  uint64 total = 1;
+  repeated FileInfo data = 2;
+}
+
+message UpdateFileReq {
+  string id = 1;
+  optional string name = 2;
+  repeated uint64 tag_ids = 3;
+}
+
+message StatusReq {
+  string id = 1;
+  uint32 status = 2;
+}
+
+message DeleteByUrlReq {
+  string url = 1;
+}
+
+message UploadFileReq {
+  bytes data = 1;
+  string name = 2;      // original file name, only set in the first packet
+  string file_type = 3; // MIME type of the file, e.g. image/png, only set in the first packet
+  string md5 = 4;       // optional, only set in the first packet
+  uint64 tag_id = 5;    // optional, only set in the first packet
+  bool last = 6;
+  optional string user_id = 7; // uploader id, injected by the gateway from JWT
+}
+
+message DownloadFileReq {
+  string id = 1;
+  optional string user_id = 2; // requester id, injected by the gateway from JWT
+}
+
+message FileChunk {
+  bytes data = 1;
+}
+
+// ---------- file tag ----------
+message FileTagInfo {
+  optional uint64 id = 1;
+  optional int64 created_at = 2;
+  optional int64 updated_at = 3;
+  optional uint32 status = 4;
+  optional string name = 5;
+  optional string remark = 6;
+}
+
+message FileTagListReq {
+  uint64 page = 1;
+  uint64 page_size = 2;
+  optional string name = 3;
+  optional string remark = 4;
+}
+
+message FileTagListResp {
+  uint64 total = 1;
+  repeated FileTagInfo data = 2;
+}
+
+// ---------- storage provider ----------
+message StorageProviderInfo {
+  optional uint64 id = 1;
+  optional int64 created_at = 2;
+  optional int64 updated_at = 3;
+  optional bool state = 4;
+  optional string name = 5;
+  optional string bucket = 6;
+  optional string secret_id = 7;
+  optional string secret_key = 8;
+  optional string endpoint = 9;
+  optional string folder = 10;
+  optional string region = 11;
+  optional bool is_default = 12;
+  optional bool use_cdn = 13;
+  optional string cdn_url = 14;
+}
+
+message StorageProviderListReq {
+  uint64 page = 1;
+  uint64 page_size = 2;
+  optional string name = 3;
+}
+
+message StorageProviderListResp {
+  uint64 total = 1;
+  repeated StorageProviderInfo data = 2;
+}
+
+// ---------- cloud file ----------
+message CloudFileInfo {
+  optional string id = 1;
+  optional int64 created_at = 2;
+  optional int64 updated_at = 3;
+  optional bool state = 4;
+  optional string name = 5;
+  optional string url = 6;
+  optional string relative_src = 7;
+  optional uint64 size = 8;
+  optional uint32 file_type = 9;
+  optional string user_id = 10;
+  optional uint64 provider_id = 11;
+  repeated uint64 tag_ids = 12;
+}
+
+message CloudFileListReq {
+  uint64 page = 1;
+  uint64 page_size = 2;
+  optional string name = 3;
+  optional uint64 provider_id = 4;
+  repeated uint64 tag_ids = 5;
+  optional uint32 file_type = 6;
+  optional string provider_name = 7;
+}
+
+message CloudFileListResp {
+  uint64 total = 1;
+  repeated CloudFileInfo data = 2;
+}
+
+message UploadCloudFileReq {
+  bytes data = 1;
+  string name = 2;      // original file name, only set in the first packet
+  string provider = 3;  // provider name, only set in the first packet; empty = default provider
+  uint64 tag_id = 4;    // optional, only set in the first packet
+  bool last = 5;
+  string file_type = 6;        // MIME type of the file, e.g. image/png, only set in the first packet
+  optional string user_id = 7; // uploader id, injected by the gateway from JWT
+}
+
+// ---------- cloud file tag ----------
+message CloudFileTagInfo {
+  optional uint64 id = 1;
+  optional int64 created_at = 2;
+  optional int64 updated_at = 3;
+  optional uint32 status = 4;
+  optional string name = 5;
+  optional string remark = 6;
+}
+
+message CloudFileTagListReq {
+  uint64 page = 1;
+  uint64 page_size = 2;
+  optional string name = 3;
+  optional string remark = 4;
+}
+
+message CloudFileTagListResp {
+  uint64 total = 1;
+  repeated CloudFileTagInfo data = 2;
+}
+
+service File {
+  // group: base
+  rpc initDatabase(Empty) returns (BaseResp);
+
+  // group: file
+  rpc uploadFile(stream UploadFileReq) returns (FileInfo);
+  rpc downloadFile(DownloadFileReq) returns (stream FileChunk);
+  rpc fileList(FileListReq) returns (FileListResp);
+  rpc updateFile(UpdateFileReq) returns (BaseResp);
+  rpc deleteFile(UUIDsReq) returns (BaseResp);
+  rpc setFileStatus(StatusReq) returns (BaseResp);
+  rpc deleteFileByUrl(DeleteByUrlReq) returns (BaseResp);
+
+  // group: filetag
+  rpc createFileTag(FileTagInfo) returns (BaseIDResp);
+  rpc updateFileTag(FileTagInfo) returns (BaseResp);
+  rpc getFileTagList(FileTagListReq) returns (FileTagListResp);
+  rpc getFileTagById(IDReq) returns (FileTagInfo);
+  rpc deleteFileTag(IDsReq) returns (BaseResp);
+
+  // group: storageprovider
+  rpc createStorageProvider(StorageProviderInfo) returns (BaseIDResp);
+  rpc updateStorageProvider(StorageProviderInfo) returns (BaseResp);
+  rpc getStorageProviderList(StorageProviderListReq) returns (StorageProviderListResp);
+  rpc getStorageProviderById(IDReq) returns (StorageProviderInfo);
+  rpc deleteStorageProvider(IDsReq) returns (BaseResp);
+
+  // group: cloudfile
+  rpc createCloudFile(CloudFileInfo) returns (BaseUUIDResp);
+  rpc updateCloudFile(CloudFileInfo) returns (BaseResp);
+  rpc deleteCloudFile(UUIDsReq) returns (BaseResp);
+  rpc getCloudFileList(CloudFileListReq) returns (CloudFileListResp);
+  rpc getCloudFileById(UUIDReq) returns (CloudFileInfo);
+  rpc deleteCloudFileByUrl(DeleteByUrlReq) returns (BaseResp);
+  rpc uploadCloudFile(stream UploadCloudFileReq) returns (CloudFileInfo);
+
+  // group: cloudfiletag
+  rpc createCloudFileTag(CloudFileTagInfo) returns (BaseIDResp);
+  rpc updateCloudFileTag(CloudFileTagInfo) returns (BaseResp);
+  rpc getCloudFileTagList(CloudFileTagListReq) returns (CloudFileTagListResp);
+  rpc getCloudFileTagById(IDReq) returns (CloudFileTagInfo);
+  rpc deleteCloudFileTag(IDsReq) returns (BaseResp);
+}
